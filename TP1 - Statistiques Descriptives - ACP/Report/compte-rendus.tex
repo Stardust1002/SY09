@@ -1,0 +1,703 @@
+% !TEX encoding = IsoLatin
+%\documentclass[twoside]{article}
+\documentclass{article}
+\usepackage[francais]{babel}
+\usepackage[latin1]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{pdfpages}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+\usepackage{bbm}
+
+\usepackage[hmarginratio=1:1,top=32mm,columnsep=20pt]{geometry}
+\usepackage{multirow}
+\usepackage{multicol} % Style double colonne 
+\usepackage{abstract} % Customization de l'abstract 
+\usepackage{fancyhdr} % en-têtes et pieds de page 
+\usepackage{float} % Nécessaire pour les tables et figures dans l'environnement double colonne 
+
+\usepackage[colorlinks=true,linkcolor=red,urlcolor=blue,filecolor=green]{hyperref} % hyperliens 
+
+\usepackage{dtklogos}
+
+% En-têtes et pieds de page 
+\pagestyle{fancy}  
+\fancyhead{} % Blank out the default header
+\fancyfoot{} % Blank out the default footer
+\fancyhead[C]{Compte-rendu du TP n°1 de SY09 par A. JEANNOT} % Custom header text
+\fancyfoot[RO,LE]{\thepage} % Custom footer text
+
+%\setlength{\parskip}{1ex} % espace entre paragraphes 
+
+\newcommand{\bsx}{\boldsymbol{x}}
+\newcommand{\transp}{^{\mathrm{t}}}
+
+
+%----------------------------------------------------------------------------------------
+
+\title{SY09 - TP1\\Statistique descriptive, Analyse en composantes principales}
+
+\author{Antoine Jeannot}
+\date{\today}
+
+%----------------------------------------------------------------------------------------
+
+\begin{document}
+
+\maketitle % Insert title
+
+\thispagestyle{fancy} % All pages have headers and footers
+
+
+%----------------------------------------------------------------------------------------
+
+\begin{abstract}
+
+Le premier TP de SY09 a pour objectifs d'apprendre à manipuler les outils fondamentaux de statistiques descriptives du logiciel R, afin de comprendre, d'analyser et de tirer ou non des conclusions à propos de jeux de données complexes issus de paris sportifs ou concernant deux espèces de crabes.
+Il a également pour but d'illustrer et de nous faire utiliser l'analyse en composantes principales, nous expliquant les besoins et les avantages de l'utilisation d'une telle méthode.
+
+\end{abstract}
+
+
+%----------------------------------------------------------------------------------------
+
+\begin{multicols}{2}
+\section{Statistique descriptive}
+La première partie du TP concerne les statistiques descriptives. La première sous-partie traite de l'analyse de paris sportifs, la seconde de deux espèces de crabes.
+\subsection{Le racket du tennis}
+
+Le jeu de données fourni contient au total quelques 129 271 prises de positions décrites par 16 variables, tel l'identifiant du match de tennis, le bookmaker, l'année du match, le gagnant, le perdant ainsi que la probabilité de gain du dit match.
+Dans un premier temps, et suite au script de pré-traitement, nous avons réalisé une analyse descriptive de ces données afin de mieux comprendre leur organisation, leur structure et de devenir à l'aise avec leur manipulation.
+
+Ainsi, 25993 matchs ont été trouvés dans ces données, ayant lieu de 2009 à 2015. 1523 joueurs différents sont également présents, ainsi que sept matchbookers (notés de A à G).
+
+Une fois cette analyse descriptive générale effectuée, nous avons calculé le nombre de matchs gagnés et perdus par joueur avant de classer les joueurs selon leur niveau.
+Pour cela, et étant donné qu'un même match possède plusieurs entrées dans le jeu de données (à cause des différents matchbookers), il fallait tout d'abord projeter nos données sur les colonnes match\_uid, winner et looser pour obtenir des triplets (match\_uid,winner,looser) uniques. Nous avons ensuite calculer deux tables de contingence: une sur la colonne winner et une sur la colonne looser afin d'obtenir, pour un joueur, son nombre de victoires et de défaites. Enfin, nous avons calculer le niveau de chaque joueur grâce à une fonction ratio: Victoires / (Victoires + Défaites). Un graphique de dispersion des joueurs selon leur niveau a pu être réalisé. (sachant qu'un niveau/ratio de 0.5 correspond à un niveau neutre, autant de victoires que de défaites).
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=0.4\textwidth]{players_levels}
+\caption{\label{fig:players_levels}Graphique de dispersion des 1523 joueurs.}
+\end{center}
+\end{figure}
+
+
+Nous avons ensuite étudié les matches suspects et la manière de les distinguer. Pour cela, nous avons calculer l'évolution de la probabilité de gain du gagnant, du perdant ainsi que l'évolution de la probabilité en valeur absolue. Puis nous avons appliqué une restriction sur cette dernière pour ne sélectionner que les matchs qui présentent une évolution de probabilité de gain supérieure à 0.1. Ainsi 2798 matches suspects ont été authentifiés, menant à 4298 paris suspects.
+Nous avons ainsi généré un data.frame composé uniquement de match suspects.
+De plus, nous avons recherché les bookmakers impliqués dans ces matches suspects en calculant la table de contingence pour la colonne book sur l'ensemble de ces matches suspects.
+Tous ont participé au moins 121 fois dans des matches suspects. Nous avons également effectuer un ratio nombre de matches suspects / nombre de matches par bookmaker pour avoir la proportion de potentiels litiges par nombre de matches joués et par conséquent pouvoir comparer les "petits" bookmakers aux "grands".
+\begin{table}[H]
+\begin{center}
+\caption{\label{tab:exemple}Nombre de matches joués par bookmaker.}
+\begin{tabular}{lllllll}
+A  &  B   &  C  &    D    & E   &  F   &  G \\
+\hline 
+22681&22285&21482&16688&16685&14161&12479 
+\end{tabular}
+\end{center}
+\end{table}
+
+\begin{table}[H]
+\begin{center}
+\caption{\label{tab:exemple}Nombre de matches suspects par bookmaker.}
+\begin{tabular}{ccccccc}
+B  & C & A  & D  & E  & F & G \\
+\hline
+1363 & 1117 &1007 & 243 & 229 &  218 & 121 
+\end{tabular}
+\end{center}
+\end{table}
+\begin{table}[H]
+\begin{center}
+\caption{\label{tab:exemple}Ratio nombre de matches suspects / nombre de matchs par bookmaker. (en \%)}
+\begin{tabular}{lllllll}
+B&C&A&D&E&F&G \\
+\hline
+6.12&5.20&4.44&1.46&1.37&1.54&0.97\end{tabular}
+\end{center}
+\end{table}
+
+Ainsi, on se rend compte que les bookmakers B, C et A sont les plus impliqués dans des matches suspects avec un ratio allant de 4.44\% à 6.12\%. Ceux-ci sont également les plus gros bookmakers (plus grand nombre de matches joués).
+
+Ensuite, nous avons cherché les joueurs suspectés d'être associés aux matches jugés litigieux. Pour cela, nous avons regroupé les gagnants dont la probabilité de gain du perdant a augmenté de manière significative (supérieure strictement à 0.1). De même pour les perdants dont l'évolution de la probabilité de gain du gagnant a diminué de manière significative (inférieure strictement à -0.1).
+Nous avons ensuite appliquer une union sur ces deux ensembles de joueurs afin de regrouper les gagnants et perdants suspects au sein d'un même tableau "joueurs suspects". (la fonction union de R enlevant les doublons).
+Ainsi, nous avons relevés 333 gagnants suspects, 365 perdants suspects, pour un total de 462 joueurs suspects, ce qui nous confirme le fait que de nombreux joueurs sont suspectés à la fois de gagner et de perdre des matchs de manière suspicieuse.
+Enfin, nous avons calculer le nombre de joueurs impliqués dans un grand nombre de défaites suspectes à l'aide d'une table de contingence sur l'ensemble des perdants précédemment généré et d'une restriction qui nous a permis de garder les joueurs impliqués dans plus de 10 (strictement) défaites suspectes. 37 joueurs sont donc impliqués dans plus de 10 défaites suspectes.
+~\\
+~\\~\\
+
+\subsection{Données crabs}
+
+Le jeu de donnée crabs est un jeu de donnée dit "classique" et est constitué de 200 observations décrites par 8 variables, dont 3 qualitatives et 5 quantitatives.
+Tout comme pour les paris sportifs, nous avons dans un premier temps commencé notre travail par une analyse descriptive des données.
+Pour mieux cerner les différences entre espèces et sexes, nous avons réalisé de nombreuses visualisation sous la forme de boxplots (Fig. 12 à Fig. 17 en annexe), de paires de variables (Fig. 3) et de tables sommaires (Tables 7 à 12) réalisées par la fonction R summary.
+
+Les boxplots, paires de variables, sommaires décrivent les caractéristiques à propos des:\\
+\begin{itemize}
+\item Crabes de sexe M 
+\item Crabes de sexe F
+\item Crabes de sexe M et d'espèce O 
+\item Crabes de sexe M et d'espèce B
+\item Crabes de sexe F et d'espèce O 
+\item Crabes de sexe F et d'espèce B
+\end{itemize}
+~\\
+Après avoir réaliser ces représentations et sommaires, nous nous sommes rendus comptes qu'il existait des différences physiques entre les deux espèces, et entre sexes d'une même espèce.
+En effet, à première vue en comparant la taille des boxplots, l'espèce O apparait plus grande que l'espèce B.
+De plus, et pour toute espèce, les crabes de sexe M apparaissent également quelque peu plus grand que les crabes de sexe F.
+On notera toutefois que la différence de taille entre l'espèce O et B est plus marquée pour les crabes de sexe F, par rapport aux crabes de sexe M.
+Les paires de variables confirment également nos différentes constatations à propos de l'existence de différences physiques entre espèces et sexes.
+
+Malgré cette étude descriptive et la présence de différences physiques, l'overlapping (recouvrement) général entre sexes et espèces rend difficile l'identification précision du sexe ou de l'espèce d'un crabe à partir de mesures de ses caractéristiques. 
+On pourrait toutefois envisager de déterminer le sexe d'un "grand" crabe grâce aux variables RW et CL en calculant les coefficients directeurs des droites correspondant aux crabes de sexe M et F, bien qu'il y ait recouvrement pour les "petits" crabes ayant un RW inférieur à 13 et un CL inférieur à 30. On pourrait également envisager de construire un arbre de décision statistique basé sur les coefficients directeurs des droites des paires de variables. 
+
+Dans un second temps, nous avons étudier la corrélation entre les différentes variables en réalisant un graphique de paires de variables, et en calculant les matrices de corrélation.
+Les valeurs présentes au sein de la matrices de corrélation (Table 4) nous informent que toutes les variables (FL,RW,CL,CW) sont extrêmement dépendantes, qu'une forte dépendance linéaire existe entre elles.
+(la corrélation minimale entre deux variables étant de 0.889, entre BD et RW)
+Les graphiques de paires de variables (Fig.2 et Fig.3) viennent nous confirmer la forte dépendance linéaire entre chacune des caractéristiques.
+
+% Table created by stargazer v.5.2 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
+% Date and time: Mon, Mar 21, 2016 - 15:42:02
+\begin{table}[H] \centering 
+  \caption{Matrix de corrélation entre les caractéristiques des crabes.} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}} cccccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & FL & RW & CL & CW & BD \\ 
+\hline \\[-1.8ex] 
+FL & $1$ & $0.907$ & $0.979$ & $0.965$ & $0.988$ \\ 
+RW & $0.907$ & $1$ & $0.893$ & $0.900$ & $0.889$ \\ 
+CL & $0.979$ & $0.893$ & $1$ & $0.995$ & $0.983$ \\ 
+CW & $0.965$ & $0.900$ & $0.995$ & $1$ & $0.968$ \\ 
+BD & $0.988$ & $0.889$ & $0.983$ & $0.968$ & $1$ \\ 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table} 
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=0.45\textwidth,page=7]{Crabs/crabs.pdf}
+\caption{\label{fig:crabes}Représentation des paires de variables.}
+\end{center}
+\end{figure}
+
+\end{multicols}
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=0.45\textwidth,page=8]{Crabs/crabs.pdf}
+\includegraphics[width=0.45\textwidth,page=9]{Crabs/crabs.pdf}
+\includegraphics[width=0.45\textwidth,page=10]{Crabs/crabs.pdf}
+\includegraphics[width=0.45\textwidth,page=11]{Crabs/crabs.pdf}
+
+\caption{\label{fig:crabes}Représentations des paires de variables entre différentes espèces et sexes.}
+\end{center}
+\end{figure}
+
+\begin{multicols}{2}
+La cause de la forte dépendance des variables peut être expliquée par le fait que ces dernières correspondent à des mensurations et que, comme pour la plupart des espèces, ces dernières sont proportionnelles entre elles.
+En effet, chez l'homme par exemple, la taille des jambes est généralement proportionnelle à la taille des bras, tout comme l'est la taille des pieds.
+Ici,  la longueur de la carapace d'un crabe est bien proportionnelle à sa largeur (CL pour Carapace Length, CW pour Carapace Width), tout comme la taille du lobe frontal (FL pour Frontal Lobe), la taille de son postérieur (RW pour Rear Width) et la profondeur de son corps (BD pour Body Depth).
+
+Toutefois, pour s'affranchir de ce phénomène nous pourrions utiliser l'Analyse en Composantes Principales qui consiste à transformer des variables liées entre elles, corrélées, en nouvelles variables décorrélées les unes des autres,: les composantes principales.
+\newpage
+\section{Analyse en composantes principales}
+La deuxième partie de ce TP a pour objectifs de nous faire découvrir et appliquer l'Analyse en Composantes Principales, en l'implémentant à la fois manuellement et par le biais de fonctions pré-conçues R.
+\subsection{Exercice Théorique}
+Cet exercice théorique a pour but d'illustrer le fonctionnement de l'A.C.P. sur un exemple relativement simple et compréhensible avec une matrice initiale de taille réduite:
+\begin{equation*}
+X = \left(\begin{array}{ccc}
+3 & 4 & 3 \\ 
+1 & 4 & 3 \\ 
+2 & 3 & 6 \\ 
+4 & 1 & 2 \\ 
+\end{array}\right)
+\end{equation*}
+Dans cet exercice, nous prendrons: \begin{equation*}D_{p} = \frac{1}{n}I_{n}~~~ \text{et}~~~M = I_{p}\end{equation*} 
+Pour utiliser l'ACP, il nous faut tout d'abord centrer en colonne X en soustrayant la moyenne correspondante à chaque colonne.
+Les moyennes des trois variables sont respectivement 2.5, 3.0 et 3.5.
+
+La matrice X devient alors:
+\begin{equation*}
+X = \left(\begin{array}{ccc}
+$0.50$ & $1.0$ & $$-$0.50$ \\ 
+$$-$1.50$ & $1.0$ & $$-$0.50$ \\ 
+$$-$0.50$ & $0.0$ & $2.50$ \\ 
+$1.50$ & $$-$2.0$ & $$-$1.50$ \\ 
+\end{array}\right)
+\end{equation*}
+
+Puis, on calcule la matrice de variance: 
+\begin{equation*}
+V = X^{T}D_{p}X = \frac{1}{n}X^{T}X = \frac{1}{4}X^{T}X
+\end{equation*}
+\begin{equation*}
+V = \left(\begin{array}{ccc}
+$1.25$ & $$-$1.0$ & $$-$0.75$ \\ 
+$$-$1.0$ & $1.50$ & $0.50$ \\ 
+$$-$0.75$ & $0.50$ & $2.25$ \\ 
+\end{array}\right)
+\end{equation*}
+Enfin, on diagonalise la matrice de variance V afin d'obtenir les valeurs propres et vecteurs propres:\\
+\begin{tabular}{|l|c|r|r|}
+  \hline
+   & \(\lambda_{1}\) &  \(\lambda_{2}\) &  \(\lambda_{3}\)  \\
+  \hline
+  Valeur & 3.199 & 1.469 & 0.333 \\
+  \hline
+  \% Inertie Expliquée & 63.98 & 29.37 & 6.65 \\
+  \hline
+  \% I. E. Cumulée & 63.98 & 93.35 & 100 \\
+\hline
+\end{tabular}
+\begin{equation*}
+u_{1}=\left(\begin{array}{c}
+0.524\\
+-0.509\\ 
+-0.683\\
+\end{array}\right) ; 
+u_{2}=\left(\begin{array}{c}
+0.339\\
+-0.611\\ 
+0.716\\
+\end{array}\right) ;
+\end{equation*}
+\begin{equation*}
+u_{3}=\left(\begin{array}{c}
+0.781\\
+0.606\\ 
+0.148\\
+\end{array}\right)
+\end{equation*}
+
+On remarque ainsi que l'essentielle de l'inertie expliquée est contenue dans les deux premiers axes factoriels. (93.35\%)
+
+Ensuite, il nous fallait calculer les composantes principales avant de représenter les quatre individus dans le premier plan factoriel.
+\begin{equation*}
+C = XMU = XU
+\end{equation*}
+\begin{equation*}
+C = \left(\begin{array}{ccc}
+0.0940 & -0.799 & 0.923 \\
+-0.954 & -1.477 & -0.640\\
+-1.969 & 1.620 & -0.022\\
+2.829 & 0.656& -0.262\\
+\end{array}\right)
+\end{equation*}
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=0.45\textwidth,page=1]{ACP/premier_plan_factoriel.pdf}
+\caption{\label{fig:crabes}Représentation des individus dans le premier plan factoriel.}
+\end{center}
+\end{figure}
+
+Puis, nous avons tracer la représentation des trois variables dans le premier plan factoriel suite au calcul de la matrice de corrélation entre la matrice des composantes principales C et la matrice initiale centrée X.
+
+% Table created by stargazer v.5.2 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
+% Date and time: Wed, Mar 30, 2016 - 09:56:12
+\begin{equation*}
+cor(\alpha,j) = \left(\begin{array}{ccc}
+$0.838$ & $0.367$ & $0.403$ \\ 
+$$-$0.744$ & $$-$0.604$ & $0.285$ \\ 
+$$-$0.814$ & $0.578$ & $0.057$ \\ 
+\end{array}\right)
+\end{equation*}
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=0.45\textwidth,page=2]{ACP/premier_plan_factoriel.pdf}
+\caption{\label{fig:crabes}Représentation des variables dans le premier plan factoriel.}
+\end{center}
+\end{figure}
+
+Nous avons ensuite calculer l'expression \(\sum^{k}_{\alpha=1} c_{\alpha}u^{T}_{\alpha}\) pour tous les k:
+
+ \begin{equation*}
+k=1 : \left(\begin{array}{ccc}
+0.049 & -0.048 & -0.064 \\
+-0.500 & 0.486 & 0.651 \\
+-1.032 &1.003  & 1.344 \\
+1.482 & -1.441 & -1.931 \\
+\end{array}\right)
+\end{equation*}
+
+ \begin{equation*}
+k=2 : \left(\begin{array}{ccc}
+-0.221 & 0.440 &-0.636\\
+-1.000 & 1.388& -0.406\\
+-0.483 & 0.013 & 2.503\\
+1.704&-1.841& -1.461\\
+\end{array}\right)
+\end{equation*}
+
+ \begin{equation*}
+k=3 : \left(\begin{array}{ccc}
+0.50 & 1.0& -0.50\\
+-1.50 & 1.0 &-0.50\\
+-0.50 &0.0&  2.50\\
+1.50 &-2.0 &-1.50\\
+\end{array}\right)
+= X
+\end{equation*}
+
+Lorsque k=3, cette somme correspond à \(X=CU^{T}\) et permet de reconstituer la matrice initiale centrée X.
+\newpage
+
+\end{multicols}
+
+\subsection{Utilisation des outils R}
+
+L'objectif de cet exercice est de se familiariser avec le logiciel R et les fonctions pré-faites concernant l'Analyse en Composantes Principales.
+Pour tester ces fonctions, nous avons charger la matrice de notes puis tester la fonction princomp. Princomp permet de calculer automatiquement les composantes principales d'une matrice passée en argument et retourne un objet R constitué de plusieurs variables membres:
+\begin{itemize}
+\item sdev: écarts types des composantes principales. (sdev\^~2 correspondant aux valeurs propres)
+\item loadings: matrice des vecteurs propres.
+\item scores: matrice des composantes principales.
+\end{itemize}
+
+Ainsi, on calcule la matrice des composantes principales de notes et on l'affiche à l'aide de C\$scores:
+\begin{table}[H] \centering 
+\begin{tabular}{@{\extracolsep{5pt}} |c|c|c|c|c|c|} 
+\hline
+     &    Comp.1  &   Comp.2     & Comp.3     & Comp.4   &   Comp.5 \\
+     \hline
+jean &  8.671 & 1.419 &-2.810 &-0.233  &0.088 \\
+alin  & 3.916 & 0.519& -1.919 &-0.054  &0.113 \\
+anni   &3.195 &-3.484& -0.0212  &0.131 &-0.149 \\
+moni &-10.049 &-0.817& -3.205  &0.129 & 0.164 \\
+didi  &-6.377 & 2.099& -1.069 &-0.199 &-0.139 \\
+andr  & 2.772  &4.540&  2.113  &0.456 & 0.020 \\
+pier   &1.011 &-6.362 &-1.112& 0.089 & -0.084 \\
+brig  &-1.701  &4.518 & 1.061 &-0.136 &-0.135 \\
+evel & -1.437 &-2.431&  6.962 &-0.183  & 0.122 \\
+\hline
+\end{tabular}
+\end{table}
+
+Les valeurs propres sont ensuite calculées grâce au carré des écarts-types donnés par C\$sdev, on peut également calculer l'inertie expliquée par chaque valeur propre ainsi que l'inertie expliquée cumulée:
+\begin{table}[H] \centering 
+  \caption{Valeurs propres, \% Inertie Expliquée et \% Inertie Expliquée Cumulée} 
+  \label{} 
+\begin{tabular}{|c|c|c|c|c|c|}
+  \hline
+   & \(\lambda_{1}\) &  \(\lambda_{2}\) &  \(\lambda_{3}\)&  \(\lambda_{4}\)&  \(\lambda_{5}\)   \\
+  \hline
+  Valeur & 28.450 & 11.878 &  8.699  & 0.044  & 0.014 \\
+  \hline
+  \% Inertie Expliquée &  57.960 & 24.198 & 17.723 &  0.090 &  0.029 \\
+  \hline
+  \% Inertie Expliquée Cumulée & 57.960 & 82.158 & 99.881 &  99.971 &100 \\
+\hline
+\end{tabular}
+\end{table}
+
+La matrice des vecteurs propres (ou axes factoriels) est donnée par C\$loadings:
+\begin{table}[H] \centering 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}} |c|c|c|c|c|} 
+\hline
+\(u_{1}\) & \(u_{2}\) & \(u_{3}\) & \(u_{4}\) &  \(u_{5}\) \\
+     \hline
+-0.513 & 0.571    &0 &    0.344  &0.540\\
+-0.505 & 0.375 & 0  &    -0.197& -0.752\\
+-0.498 &-0.653 &   0    & 0.551 &-0.134\\
+-0.482& -0.326  &  0   & -0.732  &0.353\\
+ 0    &  0 &    0.997   &  0 & 0 \\           
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=0.45\textwidth,page=1]{ACP/utilisation_outils.pdf}
+\includegraphics[width=0.45\textwidth,page=2]{ACP/utilisation_outils.pdf}
+\caption{\label{}Représentations des variables dans le premier et deuxième plan factoriel.}
+\end{center}
+\end{figure}
+La table des pourcentages d'inertie expliquée cumulée (Table 5) nous informe que le nuage de points est pratiquement dans un espace de dimension 3, l'inertie expliquée cumulée correspondante étant de 99.88\%.
+
+La fonction R plot sur le résultat de la fonction R princomp génère l'histogramme des variances des composantes principales, nous permettant de visualiser l'importance de la première composante principale et de constater que les trois premières composantes représentent, "contiennent" pratiquement tout l'information ce qui confirme les constatations précédentes liées à la table des pourcentages d'inertie cumulée.
+
+La fonction biplot quant à elle affiche les individus et les variables dans le premier plan factoriel. 
+La fonction biplot.princomp bénéficie de paramètres supplémentaires par rapport à la fonction biplot: "choices" pour choisir les composantes principales à représenter, "scale" pour obtenir une représentation standard des données.
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=0.4\textwidth,page=3]{ACP/utilisation_outils.pdf}
+\includegraphics[width=0.4\textwidth,page=4]{ACP/utilisation_outils.pdf}
+\caption{\label{fig:crabes}Représentations obtenues à l'aide des fonctions plot et biplot.}
+\end{center}
+\end{figure}
+
+\subsection{Traitement des données Crabs}
+Dans cette dernière partie, nous avons réutilisé les données Crabs pour leur appliquer une A.C.P. et ainsi essayer de distinguer visuellement les espèces et sexes de crabes.
+Après avoir centrer et appliquer une A.C.P. sur les cinq variables quantitatives des données crabs, nous avons obtenu la matrice de vecteurs propres suivantes:
+\begin{table}[H] \centering 
+\begin{tabular}{@{\extracolsep{5pt}} |c|c|c|c|c|} 
+\hline
+\(u_{1}\) & \(u_{2}\) & \(u_{3}\) & \(u_{4}\) &  \(u_{5}\) \\
+     \hline
+-0.289&  -0.323 &  0.507&   0.734 &  0.125 \\
+-0.197 & -0.865 & -0.414&  -0.148&  -0.141 \\
+-0.599  & 0.198 &  0.175&  -0.144&  -0.742\\
+ -0.662&   0.288&  -0.491&   0.126 &  0.471\\
+-0.284 & -0.160 &  0.547&  -0.634  & 0.439\\
+\hline
+\end{tabular}
+\end{table}
+Ainsi que les valeurs propres suivantes:\\
+
+\begin{table}[H]\centering
+\begin{tabular}{|l|c|r|r|r|r|}
+  \hline
+   & \(\lambda_{1}\) &  \(\lambda_{2}\) &  \(\lambda_{3}\) &\(\lambda_{4}\) & \(\lambda_{5}\)   \\
+  \hline
+  Valeur &  140.00  & 1.29 &  1.00  & 0.13  & 0.078 \\  
+  \hline
+  \% Inertie Expliquée & 98.25  & 0.91 &  0.70 &  0.094 & 0.054  \\
+  \hline
+  \% Inertie Expliquée Cumulée & 98.25 & 99.15 & 99.85&  99.95 &100  \\
+\hline
+\end{tabular}
+\end{table}
+Nous pouvons déduire, grâce à la table des pourcentages d'inertie expliquée cumulée, que le nuage de points est presque entièrement dans un espace de dimension 2, voire 1 tant la première valeur propre est importante comparée aux autres. On peut alors se demander si celle-ci risque de nuire au lieu d'aider à la distinction des classes.
+Puis en effectuant la matrice de corrélations entre les différentes composantes principales, nous remarquons qu'il s'agit de la matrice identité.
+
+% Table created by stargazer v.5.2 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
+% Date and time: Thu, Mar 24, 2016 - 10:54:08
+\begin{table}[H] \centering 
+  \caption{Matrice de corrélation des composantes principales \(cor(\alpha,j)\).} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}} |cccccc|} 
+\hline
+ & Comp.1 & Comp.2 & Comp.3 & Comp.4 & Comp.5 \\ 
+\hline 
+Comp.1 & $1$ & $0$ & $0$ & $0$ & $0$ \\ 
+Comp.2 & $0$ & $1$ & $0$ & $0$ & $0$ \\ 
+Comp.3 & $0$ & $0$ & $1$ & $0$ & $0$ \\ 
+Comp.4 & $0$ & $0$ & $0$ & $1$ & $0$ \\ 
+Comp.5 & $0$ & $0$ & $0$ & $0$ & $1$ \\ 
+\hline 
+\end{tabular} 
+\end{table} 
+
+Nous pouvons ainsi en déduire que les composantes principales sont totalement dé-corrélées grâce à l'A.C.P.
+Pour visualiser les différentes espèces et sexes de crabes, nous avons créer une nouvelle catégories à quatre modalités à laquelle nous avons fais correspondre une couleur:
+\begin{itemize}
+\item 1: crabes d'espèce O de sexe M (Bleu)
+\item 2: crabes d'espèce O de sexe F (Violet)
+\item 3: crabes d'espèce B de sexe M (Cyan)
+\item 4: crabes d'espèce B de sexe F. (Rouge)
+\end{itemize} 
+
+Nous avons ensuite représenter les individus et axes principaux dans le premier plan factoriel ainsi que les paires de composantes principales, nous permettant de distinguer le sexe et l'espèce d'un crabe en fonction de ses caractéristiques, grâce aux composantes 2 et 3 notamment.
+Ainsi, malgré l'importante valeur de la première valeur propre, on constate que celle-ci n'apporte que très peu d'information pour la distinction des groupes de crabes tant il y a du recouvrement (overlapping) entre la première composante principale et les suivantes.(voir la première colonne de la Fig. 9) 
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=0.49\textwidth,page=2]{ACP/crabs.pdf}
+\includegraphics[width=0.49\textwidth,page=3]{ACP/crabs.pdf}
+\caption{\label{fig:crabes}Représentations des axes principaux et des individus dans le premier plan factoriel.}
+\end{center}
+\end{figure}
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=0.6\textwidth,page=1]{ACP/crabs.pdf}
+\caption{\label{fig:crabes}Représentation des paires de composantes principales.}
+\end{center}
+\end{figure}
+
+Pour améliorer la qualité de cette représentation, nous avons donc supprimer la première composante principale en divisant chaque composante principale par cette première avant d'effectuer les même représentations.
+Sur ces dernières, les composantes principales 1 et 2 nous permettent de distinguer plus facilement et directement le sexe et l'espèce d'un crabe, ces différents groupes étant plus distants et séparables linéairement les uns des autres.
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=0.46\textwidth,page=5]{ACP/crabs.pdf}
+\includegraphics[width=0.46\textwidth,page=6]{ACP/crabs.pdf}
+\caption{\label{fig:crabes}Nouvelles représentations des individus et axes principaux dans le premier plan factoriel.}
+\end{center}
+\end{figure}
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=0.6\textwidth,page=4]{ACP/crabs.pdf}
+\caption{\label{fig:crabes}Nouvelles représentations des paires de composantes principales.}
+\end{center}
+\end{figure}
+
+
+\section{Conclusion}
+
+Ce premier TP de SY09 nous aura permis de prendre en main le logiciel R, sa syntaxe et ses différentes fonctions.
+Il nous aura également appris à effectuer des analyses descriptives sur des jeux de donnés complexes et variés tirés de la vie courante, de nous confronter aux problèmes de corrélations de variables et de découvrir les avantages de l'A.C.P. pour les dé-corréler et mieux distinguer différents groupes  (comme les espèces de crabes) à travers des visualisations, mais aussi par la suite lors de classifications automatiques.
+
+\newpage
+%------------------------------------------------
+
+% Annexes éventuelles 
+
+\appendix % la commande \appendix change la numérotation des paragraphes 
+
+\section{Annexes}\label{ann:loinormale}
+
+% Table created by stargazer v.5.2 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
+% Date and time: Mon, Mar 21, 2016 - 14:52:57
+\begin{table}[H] \centering 
+  \caption{Description des crabes de sexe M} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}} cccccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ &       FL &       RW &       CL &       CW &       BD \\ 
+\hline \\[-1.8ex] 
+ & Min.   : 8.10   & Min.   : 6.70   & Min.   :16.10   & Min.   :18.60   & Min.   : 7.00   \\ 
+ & 1st Qu.:13.18   & 1st Qu.:10.70   & 1st Qu.:27.65   & 1st Qu.:31.60   & 1st Qu.:11.85   \\ 
+ & Median :15.70   & Median :11.85   & Median :32.45   & Median :37.10   & Median :14.20   \\ 
+ & Mean   :15.73   & Mean   :11.99   & Mean   :32.85   & Mean   :37.00   & Mean   :14.34   \\ 
+ & 3rd Qu.:18.05   & 3rd Qu.:13.50   & 3rd Qu.:37.95   & 3rd Qu.:42.83   & 3rd Qu.:16.85   \\ 
+ & Max.   :23.10   & Max.   :16.80   & Max.   :47.60   & Max.   :54.60   & Max.   :21.60   \\ 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table} 
+
+% Table created by stargazer v.5.2 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
+% Date and time: Mon, Mar 21, 2016 - 14:52:57
+\begin{table}[H] \centering 
+  \caption{Description des crabes de sexe F} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}} cccccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ &       FL &       RW &       CL &       CW &       BD \\ 
+\hline \\[-1.8ex] 
+ & Min.   : 7.20   & Min.   : 6.50   & Min.   :14.70   & Min.   :17.10   & Min.   : 6.10   \\ 
+ & 1st Qu.:12.80   & 1st Qu.:11.50   & 1st Qu.:26.55   & 1st Qu.:31.18   & 1st Qu.:11.28   \\ 
+ & Median :15.45   & Median :13.80   & Median :31.70   & Median :36.45   & Median :13.80   \\ 
+ & Mean   :15.43   & Mean   :13.49   & Mean   :31.36   & Mean   :35.83   & Mean   :13.72   \\ 
+ & 3rd Qu.:18.07   & 3rd Qu.:15.55   & 3rd Qu.:35.92   & 3rd Qu.:40.77   & 3rd Qu.:16.02   \\ 
+ & Max.   :23.10   & Max.   :20.20   & Max.   :46.20   & Max.   :52.50   & Max.   :21.10   \\ 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table} 
+
+% Table created by stargazer v.5.2 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
+% Date and time: Mon, Mar 21, 2016 - 14:52:57
+\begin{table}[H] \centering 
+  \caption{Description des crabes de sexe M et d'espece B} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}} cccccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ &       FL &       RW &       CL &       CW &       BD \\ 
+\hline \\[-1.8ex] 
+ & Min.   : 8.10   & Min.   : 6.70   & Min.   :16.10   & Min.   :19.00   & Min.   : 7.00   \\ 
+ & 1st Qu.:12.65   & 1st Qu.:10.65   & 1st Qu.:27.23   & 1st Qu.:31.52   & 1st Qu.:11.00   \\ 
+ & Median :15.10   & Median :11.70   & Median :32.45   & Median :37.10   & Median :13.60   \\ 
+ & Mean   :14.84   & Mean   :11.72   & Mean   :32.01   & Mean   :36.81   & Mean   :13.35   \\ 
+ & 3rd Qu.:17.05   & 3rd Qu.:13.28   & 3rd Qu.:37.15   & 3rd Qu.:42.52   & 3rd Qu.:15.60   \\ 
+ & Max.   :21.30   & Max.   :15.80   & Max.   :47.10   & Max.   :54.60   & Max.   :20.00   \\ 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table} 
+
+% Table created by stargazer v.5.2 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
+% Date and time: Mon, Mar 21, 2016 - 14:52:57
+\begin{table}[H] \centering 
+  \caption{Description des crabes de sexe M et d'espece O} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}} cccccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ &       FL &       RW &       CL &       CW &       BD \\ 
+\hline \\[-1.8ex] 
+ & Min.   : 9.10   & Min.   : 6.90   & Min.   :16.70   & Min.   :18.60   & Min.   : 7.40   \\ 
+ & 1st Qu.:14.10   & 1st Qu.:10.78   & 1st Qu.:28.75   & 1st Qu.:31.73   & 1st Qu.:12.95   \\ 
+ & Median :16.70   & Median :12.10   & Median :33.35   & Median :36.30   & Median :15.00   \\ 
+ & Mean   :16.63   & Mean   :12.26   & Mean   :33.69   & Mean   :37.19   & Mean   :15.32   \\ 
+ & 3rd Qu.:18.80   & 3rd Qu.:13.70   & 3rd Qu.:39.02   & 3rd Qu.:43.08   & 3rd Qu.:17.77   \\ 
+ & Max.   :23.10   & Max.   :16.80   & Max.   :47.60   & Max.   :52.80   & Max.   :21.60   \\ 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table} 
+
+% Table created by stargazer v.5.2 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
+% Date and time: Mon, Mar 21, 2016 - 14:52:57
+\begin{table}[H] \centering 
+  \caption{Description des crabes de sexe F et d'espece B} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}} cccccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ &       FL &       RW &       CL &       CW &       BD \\ 
+\hline \\[-1.8ex] 
+ & Min.   : 7.20   & Min.   : 6.50   & Min.   :14.70   & Min.   :17.10   & Min.   : 6.10   \\ 
+ & 1st Qu.:11.53   & 1st Qu.:10.62   & 1st Qu.:23.93   & 1st Qu.:27.90   & 1st Qu.:10.03   \\ 
+ & Median :13.15   & Median :12.20   & Median :27.90   & Median :32.35   & Median :11.60   \\ 
+ & Mean   :13.27   & Mean   :12.14   & Mean   :28.10   & Mean   :32.62   & Mean   :11.82   \\ 
+ & 3rd Qu.:15.28   & 3rd Qu.:13.88   & 3rd Qu.:32.75   & 3rd Qu.:37.83   & 3rd Qu.:13.88   \\ 
+ & Max.   :19.20   & Max.   :16.90   & Max.   :40.90   & Max.   :47.90   & Max.   :18.10   \\ 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table} 
+
+% Table created by stargazer v.5.2 by Marek Hlavac, Harvard University. E-mail: hlavac at fas.harvard.edu
+% Date and time: Mon, Mar 21, 2016 - 14:52:57
+\begin{table}[H] \centering 
+  \caption{Description des crabes de sexe F et d'espece O} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}} cccccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ &       FL &       RW &       CL &       CW &       BD \\ 
+\hline \\[-1.8ex] 
+ & Min.   :10.70   & Min.   : 9.20   & Min.   :21.40   & Min.   :24.00   & Min.   : 9.70   \\ 
+ & 1st Qu.:15.60   & 1st Qu.:13.60   & 1st Qu.:31.05   & 1st Qu.:34.88   & 1st Qu.:13.80   \\ 
+ & Median :18.00   & Median :14.65   & Median :34.70   & Median :39.55   & Median :15.65   \\ 
+ & Mean   :17.59   & Mean   :14.84   & Mean   :34.62   & Mean   :39.04   & Mean   :15.63   \\ 
+ & 3rd Qu.:19.90   & 3rd Qu.:16.68   & 3rd Qu.:39.70   & 3rd Qu.:44.05   & 3rd Qu.:17.85   \\ 
+ & Max.   :23.10   & Max.   :20.20   & Max.   :46.20   & Max.   :52.50   & Max.   :21.10   \\ 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table} 
+
+\begin{multicols}{2}
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=0.45\textwidth,page=1]{Crabs/crabs.pdf}
+\caption{\label{fig:crabes}Caractéristiques des crabes de sexe M.}
+\end{center}
+\end{figure}
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=0.45\textwidth,page=2]{Crabs/crabs.pdf}
+\caption{\label{fig:crabes}Caractéristiques des crabes de sexe F.}
+\end{center}
+\end{figure}
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=0.45\textwidth,page=3]{Crabs/crabs.pdf}
+\caption{\label{fig:crabes}Caractéristiques des crabes de sexe M et d'espèce O.}
+\end{center}
+\end{figure}\begin{figure}[H]
+\begin{center}
+\includegraphics[width=0.45\textwidth,page=4]{Crabs/crabs.pdf}
+\caption{\label{fig:crabes}Caractéristiques des crabes de sexe M et d'espèce B.}
+\end{center}
+\end{figure}
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=0.45\textwidth,page=5]{Crabs/crabs.pdf}
+\caption{\label{fig:crabes}Caractéristiques des crabes de sexe F et d'espèce O.}
+\end{center}
+\end{figure}
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=0.45\textwidth,page=6]{Crabs/crabs.pdf}
+\caption{\label{fig:crabes}Caractéristiques des crabes de sexe F et d'espèce B.}
+\end{center}
+\end{figure}
+\end{multicols}
+\end{document}
